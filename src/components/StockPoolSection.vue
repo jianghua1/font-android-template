@@ -17,6 +17,16 @@
         @copy-stock-code="$emit('copy-stock-code', stock.stockCode)"
         @show-detail="$emit('show-detail', stock)"
       />
+      
+      <!-- 添加股票按钮 -->
+      <div 
+        class="add-stock-card"
+        @click="$emit('add-stock', pool.id)"
+      >
+        <div class="add-stock-content">
+          <div class="add-icon">+</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -35,7 +45,7 @@ defineProps({
   }
 })
 
-defineEmits(['copy-stock-code', 'show-detail'])
+defineEmits(['copy-stock-code', 'show-detail', 'add-stock'])
 </script>
 
 <style scoped>
@@ -45,5 +55,53 @@ defineEmits(['copy-stock-code', 'show-detail'])
 
 .stock-pool-section:last-child {
   border-bottom: none;
+}
+
+/* 添加股票按钮样式 */
+.add-stock-card {
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(38, 38, 38, 0.6);
+  backdrop-filter: blur(10px);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  width: calc(16.666% - 8px);
+  height: auto;
+  min-height: 40px;
+  max-height: 55px;
+  min-width: 40px;
+  max-width: 55px;
+}
+
+.add-stock-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.add-stock-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.add-icon {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
+}
+
+.add-stock-card:hover .add-icon {
+  color: #3b82f6;
+  transform: scale(1.2);
 }
 </style>

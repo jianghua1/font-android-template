@@ -9,6 +9,7 @@
         :stockSignals="stockSignals"
         @copy-stock-code="copyStockCode"
         @show-detail="showStockDetail"
+        @add-stock="handleAddStock"
       />
     </div>
 
@@ -25,6 +26,14 @@
       @delete-stock="deleteStockFromPool"
       @toggle-remarks="toggleStockRemarks"
     />
+
+    <!-- 添加股票弹窗 -->
+    <AddStockModal
+      v-model:visible="showAddStockModal"
+      :stock-pools="stockPools"
+      :selected-pool-id="selectedPoolIdForAdd"
+      @stock-added="handleStockAdded"
+    />
   </div>
 </template>
 
@@ -32,6 +41,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import StockPoolSection from './components/StockPoolSection.vue'
 import StockDetailModal from './components/StockDetailModal.vue'
+import AddStockModal from './components/AddStockModal.vue'
 import { stockApi } from './api/stockApi'
 
 // 股票池数据
@@ -99,6 +109,10 @@ const copyStockCode = async (stockCode) => {
 const showDetailModal = ref(false)
 const selectedStock = ref(null)
 
+// 添加股票相关状态
+const showAddStockModal = ref(false)
+const selectedPoolIdForAdd = ref(null)
+
 // 显示股票详情弹窗
 const showStockDetail = (stock) => {
   selectedStock.value = stock
@@ -146,6 +160,18 @@ const toggleStockRemarks = (stock) => {
       console.log(`${stock.stockName} ${stockToUpdate.hasRemarks ? '已添加备注' : '已移除备注'}`)
     }
   }
+}
+
+// 处理添加股票事件
+const handleAddStock = (poolId) => {
+  selectedPoolIdForAdd.value = poolId
+  showAddStockModal.value = true
+}
+
+// 处理股票添加成功
+const handleStockAdded = () => {
+  console.log('股票添加成功，重新加载数据...')
+  loadStockPools()
 }
 
 // 加载120分钟级别实时指标数据

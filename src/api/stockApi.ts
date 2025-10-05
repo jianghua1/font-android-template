@@ -57,13 +57,13 @@ export interface Stock120MinIndicatorResponse {
 export interface AddStockRequest {
   poolId: number
   stockCode: string
-  stockName: string
+  remark?: string
 }
 
 export interface AddStockResponse {
   code: number
   message: string
-  data: StockInfo
+  data: null
 }
 
 // API服务
@@ -109,6 +109,32 @@ export const stockApi = {
       }
     } catch (error) {
       console.error(`获取股票池 ${poolId} 的120分钟级别指标失败:`, error)
+      throw error
+    }
+  },
+
+  // 添加股票到股票池
+  async addStockToPool(poolId: number, stockCode: string, remark?: string): Promise<void> {
+    try {
+      const params = new URLSearchParams()
+      params.append('stockCode', stockCode)
+      if (remark) {
+        params.append('remark', remark)
+      }
+      
+      const response = await axiosInstance.post<AddStockResponse>(`/stock-operations/${poolId}/add-stock`, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      })
+      
+      if (response.data.code === 200) {
+        return
+      } else {
+        throw new Error(response.data.message)
+      }
+    } catch (error) {
+      console.error('添加股票失败:', error)
       throw error
     }
   }
