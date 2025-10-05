@@ -4,7 +4,7 @@
     :class="[
       getBackgroundClass(),
       getBorderClass(),
-      { 'sell-wanted-poster': props.signal === -2 },
+      { 'sell-wanted-poster': props.edgeSignal === -2 },
       { 'copy-highlight': isCopying }
     ]"
     @click="$emit('show-detail', stock)"
@@ -16,12 +16,8 @@
   >
     <!-- 信号竖线动画 -->
     <div 
-      v-if="props.signal === -2" 
-      class="signal-line-red"
-    ></div>
-    <div 
-      v-else-if="props.signal === -1" 
-      class="signal-line-yellow"
+      v-if="props.edgeSignal === -2 || props.edgeSignal === -1" 
+      :class="props.edgeSignal === -2 ? 'signal-line-red' : 'signal-line-yellow'"
     ></div>
 
     <!-- 股票信息内容 -->
@@ -55,6 +51,10 @@ const props = defineProps({
     required: true
   },
   signal: {
+    type: Number,
+    default: 0
+  },
+  edgeSignal: {
     type: Number,
     default: 0
   }
@@ -99,7 +99,7 @@ const getBackgroundClass = () => {
 
 // 获取边框颜色类
 const getBorderClass = () => {
-  switch (props.signal) {
+  switch (props.edgeSignal) {
     case 2: return 'signal-border-green'
     case 1: return 'signal-border-blue'
     case -1: return 'signal-border-yellow'

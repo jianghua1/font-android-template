@@ -1,0 +1,115 @@
+import axiosInstance from '../utils/axios'
+
+// 股票池接口响应类型
+export interface StockPool {
+  id: number
+  poolName: string
+  createTime: string
+  description: string
+  enabled: boolean
+  priority: number
+  showDateDisplay: boolean
+  myHolding: boolean
+}
+
+export interface StockPoolResponse {
+  code: number
+  message: string
+  data: StockPool[]
+}
+
+// 股票信息接口响应类型
+export interface StockInfo {
+  id: number
+  poolId: number
+  stockCode: string
+  position: number
+  entryTime: string
+  stockName: string
+  buyPointDate: string | null
+  theNumberOfDaysFromToday: number | null
+  stockStrengthSignal: number
+  weeklyCCI1: number
+  frozen: boolean
+  hasRemarks: boolean
+}
+
+export interface StockInfoResponse {
+  code: number
+  message: string
+  data: StockInfo[]
+}
+
+// 120分钟级别实时指标接口响应类型
+export interface Stock120MinIndicator {
+  stockCode: string
+  stockStrengthSignal: string
+  cci1: string
+}
+
+export interface Stock120MinIndicatorResponse {
+  code: number
+  message: string
+  data: Stock120MinIndicator[]
+}
+
+// 添加股票请求类型
+export interface AddStockRequest {
+  poolId: number
+  stockCode: string
+  stockName: string
+}
+
+export interface AddStockResponse {
+  code: number
+  message: string
+  data: StockInfo
+}
+
+// API服务
+export const stockApi = {
+  // 获取股票池列表
+  async getStockPools(): Promise<StockPool[]> {
+    try {
+      const response = await axiosInstance.get<StockPoolResponse>('/stock-pools')
+      if (response.data.code === 200) {
+        return response.data.data
+      } else {
+        throw new Error(response.data.message)
+      }
+    } catch (error) {
+      console.error('获取股票池失败:', error)
+      throw error
+    }
+  },
+
+  // 获取股票池中的股票列表
+  async getStocksByPoolId(poolId: number): Promise<StockInfo[]> {
+    try {
+      const response = await axiosInstance.get<StockInfoResponse>(`/stock-operations/${poolId}/stocks`)
+      if (response.data.code === 200) {
+        return response.data.data
+      } else {
+        throw new Error(response.data.message)
+      }
+    } catch (error) {
+      console.error(`获取股票池 ${poolId} 的股票列表失败:`, error)
+      throw error
+    }
+  },
+
+  // 获取120分钟级别实时指标分析
+  async get120MinIndicators(poolId: number): Promise<Stock120MinIndicator[]> {
+    try {
+      const response = await axiosInstance.get<Stock120MinIndicatorResponse>(`/stock-operations/${poolId}/analyze-120min-indicators`)
+      if (response.data.code === 200) {
+        return response.data.data
+      } else {
+        throw new Error(response.data.message)
+      }
+    } catch (error) {
+      console.error(`获取股票池 ${poolId} 的120分钟级别指标失败:`, error)
+      throw error
+    }
+  }
+}

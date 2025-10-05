@@ -11,6 +11,7 @@
     "@capacitor/android": "^7.4.2",
     "@capacitor/cli": "^7.0.0",
     "@capacitor/core": "^7.0.0",
+    "axios": "^1.12.2",
     "vue": "^3.3.4"
   },
   "devDependencies": {

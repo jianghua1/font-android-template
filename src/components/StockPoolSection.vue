@@ -12,7 +12,8 @@
         v-for="stock in pool.stocks"
         :key="stock.stockCode"
         :stock="stock"
-        :signal="stockSignals[stock.stockCode]"
+        :signal="stock.stockStrengthSignal"
+        :edge-signal="stockSignals[stock.stockCode]"
         @copy-stock-code="$emit('copy-stock-code', stock.stockCode)"
         @show-detail="$emit('show-detail', stock)"
       />
