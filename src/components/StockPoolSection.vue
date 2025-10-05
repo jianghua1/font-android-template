@@ -7,7 +7,7 @@
     </div>
 
     <!-- 股票卡片网格 -->
-    <div class="grid grid-cols-6 gap-2">
+    <div class="grid grid-cols-6 gap-1">
       <StockCard
         v-for="stock in pool.stocks"
         :key="stock.stockCode"
@@ -70,12 +70,10 @@ defineEmits(['copy-stock-code', 'show-detail', 'add-stock'])
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   cursor: pointer;
-  width: calc(16.666% - 8px);
+  width: 16.666%;
   height: auto;
   min-height: 40px;
-  max-height: 55px;
   min-width: 40px;
-  max-width: 55px;
 }
 
 .add-stock-card:hover {

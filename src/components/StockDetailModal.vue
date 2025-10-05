@@ -44,6 +44,33 @@
         </div>
       </div>
 
+      <!-- CCI指标显示区域 -->
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <!-- 周线CCI1 -->
+        <div class="bg-neutral-700 rounded-lg p-3 text-center">
+          <div class="text-neutral-400 text-xs mb-1">周线CCI1</div>
+          <div :class="getCCIColorClass(stock.weeklyCCI1)" class="text-lg font-semibold">
+            {{ formatCCIValue(stock.weeklyCCI1) }}
+          </div>
+        </div>
+        
+        <!-- 2小时线CCI1 -->
+        <div class="bg-neutral-700 rounded-lg p-3 text-center">
+          <div class="text-neutral-400 text-xs mb-1">2小时线CCI1</div>
+          <div :class="getCCIColorClass(stock.cci1)" class="text-lg font-semibold">
+            {{ formatCCIValue(stock.cci1) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- 入库时间 -->
+      <div class="bg-neutral-700 rounded-lg p-3 text-center mb-6">
+        <div class="text-neutral-400 text-xs mb-1">入库时间</div>
+        <div class="text-white text-sm font-medium">
+          {{ formatEntryTime(stock.entryTime) }}
+        </div>
+      </div>
+
       <!-- 操作按钮区域 -->
       <div class="space-y-3">
         <!-- 冻结按钮 -->
@@ -138,6 +165,64 @@ const formatChange = (change) => {
   const sign = change >= 0 ? '+' : ''
   return `${sign}${change.toFixed(2)}%`
 }
+
+// 获取CCI颜色类
+const getCCIColorClass = (cciValue) => {
+  if (cciValue === null || cciValue === undefined) {
+    return 'text-neutral-400'
+  }
+  
+  const cci = Number(cciValue)
+  // 大于150或小于-150显示警示色
+  if (cci > 150 || cci < -150) {
+    return 'text-red-400 font-bold'
+  } else {
+    return 'text-white'
+  }
+}
+
+// 格式化CCI值显示
+const formatCCIValue = (cciValue) => {
+  if (cciValue === null || cciValue === undefined) {
+    return '--'
+  }
+  const cci = Number(cciValue)
+  return cci.toFixed(0)
+}
+
+// 格式化入库时间
+const formatEntryTime = (entryTime) => {
+  if (!entryTime) return '--'
+  
+  try {
+    const date = new Date(entryTime)
+    const now = new Date()
+    const diffTime = Math.abs(now - date)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    // 如果是今天，显示时间
+    if (diffDays === 1) {
+      return date.toLocaleTimeString('zh-CN', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    }
+    // 如果是昨天，显示"昨天"
+    else if (diffDays === 2) {
+      return '昨天'
+    }
+    // 其他情况显示日期
+    else {
+      return date.toLocaleDateString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit'
+      })
+    }
+  } catch (error) {
+    console.error('格式化入库时间失败:', error)
+    return '--'
+  }
+}
 </script>
 
 <style scoped>
@@ -168,4 +253,5 @@ const formatChange = (change) => {
     transform: translateY(0) scale(1);
   }
 }
+
 </style>
