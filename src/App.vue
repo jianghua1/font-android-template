@@ -1,17 +1,14 @@
 <template>
   <div class="min-h-screen bg-neutral-900 text-white p-4">
-    <!-- 页面标题 -->
-    <div class="text-center mb-6">
-      <h1 class="text-3xl font-bold text-white">股票卡片视图</h1>
-      <p class="text-neutral-400 mt-2">所有股票一览无余</p>
-    </div>
+
 
     <!-- 股票池分组展示 -->
-    <div v-for="pool in stockPools" :key="pool.id" class="mb-8">
+    <div v-for="pool in stockPools" :key="pool.id">
       <StockPoolSection 
         :pool="pool" 
         :stockSignals="stockSignals"
         @copy-stock-code="copyStockCode"
+        @show-detail="showStockDetail"
       />
     </div>
 
@@ -19,12 +16,22 @@
     <div v-if="stockPools.length === 0" class="text-center py-16">
       <div class="text-neutral-400 text-lg">暂无股票数据</div>
     </div>
+
+    <!-- 股票详情弹窗 -->
+    <StockDetailModal
+      v-model:visible="showDetailModal"
+      :stock="selectedStock"
+      @toggle-frozen="toggleStockFrozen"
+      @delete-stock="deleteStockFromPool"
+      @toggle-remarks="toggleStockRemarks"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import StockPoolSection from './components/StockPoolSection.vue'
+import StockDetailModal from './components/StockDetailModal.vue'
 
 // 模拟股票数据
 const stockPools = ref([
@@ -124,6 +131,59 @@ const copyStockCode = async (stockCode) => {
     console.log(`已复制股票代码：${stockCode}`)
   } catch (error) {
     console.error('复制股票代码失败:', error)
+  }
+}
+
+// 弹窗相关状态
+const showDetailModal = ref(false)
+const selectedStock = ref(null)
+
+// 显示股票详情弹窗
+const showStockDetail = (stock) => {
+  selectedStock.value = stock
+  showDetailModal.value = true
+}
+
+// 切换股票冻结状态
+const toggleStockFrozen = (stock) => {
+  const pool = stockPools.value.find(p => 
+    p.stocks.some(s => s.stockCode === stock.stockCode)
+  )
+  if (pool) {
+    const stockToUpdate = pool.stocks.find(s => s.stockCode === stock.stockCode)
+    if (stockToUpdate) {
+      stockToUpdate.frozen = !stockToUpdate.frozen
+      console.log(`${stock.stockName} ${stockToUpdate.frozen ? '已冻结' : '已解冻'}`)
+    }
+  }
+}
+
+// 从股票池删除股票
+const deleteStockFromPool = (stock) => {
+  const pool = stockPools.value.find(p => 
+    p.stocks.some(s => s.stockCode === stock.stockCode)
+  )
+  if (pool) {
+    const stockIndex = pool.stocks.findIndex(s => s.stockCode === stock.stockCode)
+    if (stockIndex !== -1) {
+      pool.stocks.splice(stockIndex, 1)
+      console.log(`已删除股票：${stock.stockName}`)
+      showDetailModal.value = false
+    }
+  }
+}
+
+// 切换股票备注状态
+const toggleStockRemarks = (stock) => {
+  const pool = stockPools.value.find(p => 
+    p.stocks.some(s => s.stockCode === stock.stockCode)
+  )
+  if (pool) {
+    const stockToUpdate = pool.stocks.find(s => s.stockCode === stock.stockCode)
+    if (stockToUpdate) {
+      stockToUpdate.hasRemarks = !stockToUpdate.hasRemarks
+      console.log(`${stock.stockName} ${stockToUpdate.hasRemarks ? '已添加备注' : '已移除备注'}`)
+    }
   }
 }
 

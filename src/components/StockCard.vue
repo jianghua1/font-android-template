@@ -1,12 +1,18 @@
 <template>
   <div 
-    class="stock-card rounded-full relative overflow-hidden cursor-pointer"
+    class="stock-card rounded-lg relative overflow-hidden cursor-pointer"
     :class="[
       getBackgroundClass(),
       getBorderClass(),
-      { 'sell-wanted-poster': props.signal === -2 }
+      { 'sell-wanted-poster': props.signal === -2 },
+      { 'copy-highlight': isCopying }
     ]"
-    @click="$emit('copy-stock-code', stock.stockCode)"
+    @click="$emit('show-detail', stock)"
+    @mousedown="startLongPress"
+    @mouseup="cancelLongPress"
+    @touchstart="startLongPress"
+    @touchend="cancelLongPress"
+    @mouseleave="cancelLongPress"
   >
     <!-- 信号竖线动画 -->
     <div 
@@ -20,42 +26,29 @@
 
     <!-- 股票信息内容 -->
     <div class="stock-content flex flex-col items-center justify-center z-10 relative">
-      <!-- 股票代码 - 竖排文字 -->
-      <div class="vertical-text text-sm font-bold text-white leading-none">
-        {{ stock.stockCode }}
-      </div>
-      
       <!-- 股票名称 - 竖排文字 -->
       <div class="vertical-text text-xs text-white/90 leading-none mt-1">
-        {{ stock.stockName }}
+        {{ stock.stockName.slice(0, 2) }}
       </div>
       
-      <!-- 价格和涨跌幅 -->
-      <div class="price-section mt-1">
-        <div :class="getPriceColor(stock.change)" class="text-xs font-semibold leading-tight">
-          {{ stock.price?.toFixed(2) || '--' }}
-        </div>
-        <div :class="getChangeColor(stock.change)" class="text-xs leading-tight">
-          {{ formatChange(stock.change) }}
-        </div>
-      </div>
-
       <!-- 备注标记 -->
       <div 
         v-if="stock.hasRemarks" 
-        class="remarks-indicator absolute top-1 right-1 w-1.5 h-1.5 bg-yellow-400 rounded-full"
+        class="remarks-indicator absolute top-1 right-1 w-1.5 h-1.5 bg-yellow-400 rounded-sm"
       ></div>
 
       <!-- 冻结标记 -->
       <div 
         v-if="stock.frozen" 
-        class="frozen-indicator absolute top-1 left-1 w-1.5 h-1.5 bg-blue-400 rounded-full"
+        class="frozen-indicator absolute top-1 left-1 w-1.5 h-1.5 bg-blue-400 rounded-sm"
       ></div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+
 const props = defineProps({
   stock: {
     type: Object,
@@ -67,7 +60,31 @@ const props = defineProps({
   }
 })
 
-defineEmits(['copy-stock-code'])
+const emit = defineEmits(['copy-stock-code', 'show-detail'])
+
+const isCopying = ref(false)
+const longPressTimer = ref(null)
+
+// 开始长按
+const startLongPress = () => {
+  isCopying.value = true
+  longPressTimer.value = setTimeout(() => {
+    emit('copy-stock-code', props.stock.stockCode)
+    // 复制完成后重置状态
+    setTimeout(() => {
+      isCopying.value = false
+    }, 300)
+  }, 800) // 800ms长按时间
+}
+
+// 取消长按
+const cancelLongPress = () => {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+  isCopying.value = false
+}
 
 // 获取背景颜色类
 const getBackgroundClass = () => {
@@ -123,8 +140,12 @@ const formatChange = (change) => {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   cursor: pointer;
-  min-height: 60px;
-  max-height: 80px;
+  width: calc(16.666% - 8px); /* 屏幕宽度的六分之一减去间隙 */
+  height: auto;
+  min-height: 40px;
+  max-height: 55px;
+  min-width: 40px;
+  max-width: 55px;
 }
 
 .stock-card:hover {
@@ -134,7 +155,7 @@ const formatChange = (change) => {
 }
 
 .stock-content {
-  padding: 1rem;
+  padding: 0.5rem;
 }
 
 .price-section {
@@ -154,7 +175,7 @@ const formatChange = (change) => {
   animation: slideLine 2s infinite ease-in-out;
   z-index: 5;
   filter: brightness(1.2);
-  border-radius: 50%;
+  border-radius: 0;
 }
 
 .signal-line-red {
@@ -309,9 +330,31 @@ const formatChange = (change) => {
   white-space: nowrap;
   line-height: 1.2;
   letter-spacing: 0.05em;
-  transform: rotate(180deg);
   text-align: center;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 长按复制时的视觉反馈 */
+.copy-highlight {
+  animation: copyPulse 0.8s ease-in-out;
+  border-color: rgba(59, 130, 246, 0.8) !important;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.6) !important;
+  background: rgba(59, 130, 246, 0.3) !important;
+}
+
+@keyframes copyPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.8);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  }
 }
 
 /* 通缉令效果的卖标记 */

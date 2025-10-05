@@ -1,11 +1,9 @@
 <template>
   <div class="stock-pool-section">
     <!-- 股票池标题 -->
-    <div class="mb-4">
+    <div class="mb-4 text-center">
       <h2 class="text-xl font-semibold text-white">{{ pool.poolName }}</h2>
-      <div class="text-neutral-400 text-sm mt-1">
-        共 {{ pool.stocks.length }} 只股票
-      </div>
+   
     </div>
 
     <!-- 股票卡片网格 -->
@@ -16,6 +14,7 @@
         :stock="stock"
         :signal="stockSignals[stock.stockCode]"
         @copy-stock-code="$emit('copy-stock-code', stock.stockCode)"
+        @show-detail="$emit('show-detail', stock)"
       />
     </div>
   </div>
@@ -35,13 +34,12 @@ defineProps({
   }
 })
 
-defineEmits(['copy-stock-code'])
+defineEmits(['copy-stock-code', 'show-detail'])
 </script>
 
 <style scoped>
 .stock-pool-section {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 2rem;
 }
 
 .stock-pool-section:last-child {
