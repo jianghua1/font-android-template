@@ -57,17 +57,26 @@
         <!-- 2小时线CCI1 -->
         <div class="bg-neutral-700 rounded-lg p-3 text-center">
           <div class="text-neutral-400 text-xs mb-1">2小时线CCI1</div>
-          <div :class="getCCIColorClass(stock.cci1)" class="text-lg font-semibold">
-            {{ formatCCIValue(stock.cci1) }}
+          <div :class="getCCIColorClass(cci1)" class="text-lg font-semibold">
+            {{ formatCCIValue(cci1) }}
           </div>
         </div>
       </div>
 
       <!-- 入库时间 -->
-      <div class="bg-neutral-700 rounded-lg p-3 text-center mb-6">
+      <div class="bg-neutral-700 rounded-lg p-3 text-center mb-4">
         <div class="text-neutral-400 text-xs mb-1">入库时间</div>
         <div class="text-white text-sm font-medium">
           {{ formatEntryTime(stock.entryTime) }}
+        </div>
+      </div>
+
+      <!-- 入库天数 -->
+      <div v-if="stock.theNumberOfDaysFromToday !== null && stock.theNumberOfDaysFromToday !== undefined" 
+           class="bg-neutral-700 rounded-lg p-3 text-center mb-6">
+        <div class="text-neutral-400 text-xs mb-1">入库天数</div>
+        <div class="text-white text-sm font-medium">
+          {{ stock.theNumberOfDaysFromToday }} 天
         </div>
       </div>
 
@@ -83,7 +92,7 @@
               : 'bg-neutral-700 hover:bg-neutral-600 text-white'
           ]"
         >
-          {{ stock.frozen ? '已冻结' : '冻结' }}
+          {{ stock.frozen ? '解冻' : '冻结' }}
         </button>
 
         <!-- 删除按钮 -->
@@ -96,15 +105,11 @@
 
         <!-- 备注按钮 -->
         <button 
-          @click="toggleRemarks"
-          :class="[
-            'w-full py-3 rounded-lg font-medium transition-all',
-            stock.hasRemarks 
-              ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
-              : 'bg-neutral-700 hover:bg-neutral-600 text-white'
-          ]"
+          v-if="stock.hasRemarks"
+          @click="showRemarks"
+          class="w-full py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-all"
         >
-          {{ stock.hasRemarks ? '取消备注' : '添加备注' }}
+          查看备注
         </button>
       </div>
     </div>
@@ -112,7 +117,8 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { stockApi } from '../api/stockApi'
 
 const props = defineProps({
   visible: {
@@ -122,10 +128,18 @@ const props = defineProps({
   stock: {
     type: Object,
     default: () => ({})
+  },
+  poolId: {
+    type: Number,
+    required: true
+  },
+  cci1: {
+    type: Number,
+    default: null
   }
 })
 
-const emit = defineEmits(['update:visible', 'toggle-frozen', 'delete-stock', 'toggle-remarks'])
+const emit = defineEmits(['update:visible', 'toggle-frozen', 'delete-stock', 'toggle-remarks', 'show-remarks'])
 
 // 关闭弹窗
 const closeModal = () => {
@@ -145,6 +159,11 @@ const deleteStock = () => {
 // 切换备注状态
 const toggleRemarks = () => {
   emit('toggle-remarks', props.stock)
+}
+
+// 显示备注
+const showRemarks = () => {
+  emit('show-remarks', props.stock)
 }
 
 // 获取价格颜色
@@ -196,28 +215,12 @@ const formatEntryTime = (entryTime) => {
   
   try {
     const date = new Date(entryTime)
-    const now = new Date()
-    const diffTime = Math.abs(now - date)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    // 格式化为 yyyy-mm-dd
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
     
-    // 如果是今天，显示时间
-    if (diffDays === 1) {
-      return date.toLocaleTimeString('zh-CN', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
-    }
-    // 如果是昨天，显示"昨天"
-    else if (diffDays === 2) {
-      return '昨天'
-    }
-    // 其他情况显示日期
-    else {
-      return date.toLocaleDateString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit'
-      })
-    }
+    return `${year}-${month}-${day}`
   } catch (error) {
     console.error('格式化入库时间失败:', error)
     return '--'

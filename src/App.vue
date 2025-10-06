@@ -22,9 +22,12 @@
     <StockDetailModal
       v-model:visible="showDetailModal"
       :stock="selectedStock"
+      :poolId="getPoolIdForStock(selectedStock)"
+      :cci1="getCCI1ForStock(selectedStock)"
       @toggle-frozen="toggleStockFrozen"
       @delete-stock="deleteStockFromPool"
       @toggle-remarks="toggleStockRemarks"
+      @show-remarks="getStockRemarks"
     />
 
     <!-- 添加股票弹窗 -->
@@ -34,6 +37,14 @@
       :selected-pool-id="selectedPoolIdForAdd"
       @stock-added="handleStockAdded"
     />
+
+    <!-- 备注弹窗 -->
+    <RemarksModal
+      v-model:visible="showRemarksModal"
+      :stockName="selectedStock?.stockName || ''"
+      :remarks="currentRemarks"
+      :createTime="currentRemarksCreateTime"
+    />
   </div>
 </template>
 
@@ -42,6 +53,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import StockPoolSection from './components/StockPoolSection.vue'
 import StockDetailModal from './components/StockDetailModal.vue'
 import AddStockModal from './components/AddStockModal.vue'
+import RemarksModal from './components/RemarksModal.vue'
 import { stockApi } from './api/stockApi'
 
 // 股票池数据
@@ -52,6 +64,9 @@ const stockSignals = ref({})
 
 // 120分钟级别实时指标数据
 const stock120MinIndicators = ref({})
+
+// 我的持仓股票池ID
+const myHoldingPoolId = ref(null)
 
 // 定时器引用
 let intervalId = null
@@ -113,6 +128,22 @@ const selectedStock = ref(null)
 const showAddStockModal = ref(false)
 const selectedPoolIdForAdd = ref(null)
 
+// 获取股票的poolId
+const getPoolIdForStock = (stock) => {
+  if (!stock) return null
+  const pool = stockPools.value.find(p => 
+    p.stocks.some(s => s.stockCode === stock.stockCode)
+  )
+  return pool ? pool.id : null
+}
+
+// 获取股票的120分钟级别CCI1值
+const getCCI1ForStock = (stock) => {
+  if (!stock || !stock.stockCode) return null
+  const indicator = stock120MinIndicators.value[stock.stockCode]
+  return indicator ? indicator.cci1 : null
+}
+
 // 显示股票详情弹窗
 const showStockDetail = (stock) => {
   selectedStock.value = stock
@@ -120,31 +151,78 @@ const showStockDetail = (stock) => {
 }
 
 // 切换股票冻结状态
-const toggleStockFrozen = (stock) => {
-  const pool = stockPools.value.find(p => 
-    p.stocks.some(s => s.stockCode === stock.stockCode)
-  )
-  if (pool) {
-    const stockToUpdate = pool.stocks.find(s => s.stockCode === stock.stockCode)
-    if (stockToUpdate) {
-      stockToUpdate.frozen = !stockToUpdate.frozen
-      console.log(`${stock.stockName} ${stockToUpdate.frozen ? '已冻结' : '已解冻'}`)
+const toggleStockFrozen = async (stock) => {
+  try {
+    const pool = stockPools.value.find(p => 
+      p.stocks.some(s => s.stockCode === stock.stockCode)
+    )
+    if (pool) {
+      const stockToUpdate = pool.stocks.find(s => s.stockCode === stock.stockCode)
+      if (stockToUpdate) {
+        if (stockToUpdate.frozen) {
+          // 解冻股票
+          await stockApi.unfreezeStock(stock.stockCode)
+        } else {
+          // 冻结股票
+          await stockApi.freezeStock(stock.stockCode)
+        }
+        
+        // 更新前端状态
+        stockToUpdate.frozen = !stockToUpdate.frozen
+        console.log(`${stock.stockName} ${stockToUpdate.frozen ? '已冻结' : '已解冻'}`)
+      }
     }
+  } catch (error) {
+    console.error('切换股票冻结状态失败:', error)
   }
 }
 
 // 从股票池删除股票
-const deleteStockFromPool = (stock) => {
-  const pool = stockPools.value.find(p => 
-    p.stocks.some(s => s.stockCode === stock.stockCode)
-  )
-  if (pool) {
-    const stockIndex = pool.stocks.findIndex(s => s.stockCode === stock.stockCode)
-    if (stockIndex !== -1) {
-      pool.stocks.splice(stockIndex, 1)
-      console.log(`已删除股票：${stock.stockName}`)
-      showDetailModal.value = false
+const deleteStockFromPool = async (stock) => {
+  try {
+    const pool = stockPools.value.find(p => 
+      p.stocks.some(s => s.stockCode === stock.stockCode)
+    )
+    if (pool) {
+      // 调用API删除股票
+      await stockApi.removeStockFromPool(pool.id, stock.stockCode)
+      
+      // 更新前端状态
+      const stockIndex = pool.stocks.findIndex(s => s.stockCode === stock.stockCode)
+      if (stockIndex !== -1) {
+        pool.stocks.splice(stockIndex, 1)
+        console.log(`已删除股票：${stock.stockName}`)
+        showDetailModal.value = false
+      }
     }
+  } catch (error) {
+    console.error('删除股票失败:', error)
+  }
+}
+
+// 备注相关状态
+const stockRemarks = ref({})
+const showRemarksModal = ref(false)
+const currentRemarks = ref('')
+const currentRemarksCreateTime = ref('')
+
+// 获取股票备注信息
+const getStockRemarks = async (stock) => {
+  try {
+    if (stock.hasRemarks) {
+      // 使用更新后的API方法获取完整的备注信息（包含remarks和createTime）
+      const remarksData = await stockApi.getStockRemarks(stock.stockCode)
+      stockRemarks.value[stock.stockCode] = remarksData.remarks
+      currentRemarks.value = remarksData.remarks
+      currentRemarksCreateTime.value = remarksData.createTime
+      
+      showRemarksModal.value = true
+    }
+  } catch (error) {
+    console.error(`获取股票 ${stock.stockCode} 的备注信息失败:`, error)
+    currentRemarks.value = '获取备注信息失败'
+    currentRemarksCreateTime.value = ''
+    showRemarksModal.value = true
   }
 }
 
@@ -215,10 +293,34 @@ const load120MinIndicators = async () => {
   }
 }
 
+// 加载我的持仓股票池ID
+const loadMyHoldingPool = async () => {
+  try {
+    console.log('开始加载我的持仓股票池ID...')
+    const holdingPoolId = await stockApi.getMyHoldingPoolId()
+    console.log('获取到我的持仓股票池ID:', holdingPoolId)
+    
+    if (holdingPoolId) {
+      myHoldingPoolId.value = holdingPoolId
+      console.log('我的持仓股票池ID:', myHoldingPoolId.value)
+    } else {
+      console.log('没有找到我的持仓股票池')
+      myHoldingPoolId.value = null
+    }
+  } catch (error) {
+    console.error('加载我的持仓股票池ID失败:', error)
+    myHoldingPoolId.value = null
+  }
+}
+
 // 加载股票池数据
 const loadStockPools = async () => {
   try {
     console.log('开始加载股票池数据...')
+    
+    // 先加载我的持仓股票池
+    await loadMyHoldingPool()
+    
     const pools = await stockApi.getStockPools()
     console.log('获取到股票池:', pools)
     
@@ -237,8 +339,12 @@ const loadStockPools = async () => {
             change: 0, // 暂时设为0，后续可以添加涨跌幅接口
             frozen: stock.frozen,
             hasRemarks: stock.hasRemarks,
+            theNumberOfDaysFromToday: stock.theNumberOfDaysFromToday,
             stockStrengthSignal: stock.stockStrengthSignal,
-            weeklyCCI1: stock.weeklyCCI1
+            weeklyCCI1: stock.weeklyCCI1,
+            entryTime: stock.entryTime, // 添加入库时间字段
+            // 添加是否在持仓股票池中的标记
+            isInHoldingPool: myHoldingPoolId.value === pool.id
           }))
           
           return {

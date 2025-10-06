@@ -4,8 +4,8 @@
     :class="[
       getBackgroundClass(),
       getBorderClass(),
-      { 'sell-wanted-poster': props.edgeSignal === -2 },
-      { 'copy-highlight': isCopying }
+      { 'copy-highlight': isCopying },
+      { 'wanted-effect': showWantedEffect }
     ]"
     @click="$emit('show-detail', stock)"
     @mousedown="startLongPress"
@@ -24,7 +24,7 @@
     <div class="stock-content flex flex-col items-center justify-center z-10 relative">
       <!-- 股票名称 - 竖排文字 -->
       <div class="vertical-text text-xs text-white/90 leading-none mt-1">
-        {{ stock.stockName.slice(0, 2) }}
+        {{ getDisplayName(stock.stockName) }}
       </div>
       
       <!-- 备注标记 -->
@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
   stock: {
@@ -64,6 +64,11 @@ const emit = defineEmits(['copy-stock-code', 'show-detail'])
 
 const isCopying = ref(false)
 const longPressTimer = ref(null)
+
+// 计算是否显示通缉令效果：股票在持仓股票池中且股价强度为-2
+const showWantedEffect = computed(() => {
+  return props.stock.isInHoldingPool && props.edgeSignal === -2
+})
 
 // 开始长按
 const startLongPress = () => {
@@ -125,6 +130,19 @@ const formatChange = (change) => {
   if (!change) return ''
   const sign = change >= 0 ? '+' : ''
   return `${sign}${change.toFixed(2)}%`
+}
+
+// 获取显示名称
+const getDisplayName = (stockName) => {
+  if (!stockName) return ''
+  
+  // 如果前两个字是"中国"，则显示接下来的两个字
+  if (stockName.startsWith('中国')) {
+    return stockName.slice(2, 4) || stockName.slice(0, 2)
+  }
+  
+  // 否则显示前两个字
+  return stockName.slice(0, 2)
 }
 </script>
 
@@ -355,41 +373,104 @@ const formatChange = (change) => {
   }
 }
 
-/* 通缉令效果的卖标记 */
-.sell-wanted-poster {
-  animation: wantedPulse 2s infinite ease-in-out;
-  backdrop-filter: blur(1px);
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
-  border: 2px dashed rgba(255, 255, 255, 0.7);
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
-  background-color: rgba(239, 68, 68, 0.6) !important;
+
+/* 通缉令特效：股票在持仓股票池中且股价强度为-2 */
+.wanted-effect {
+  position: relative;
+  overflow: visible !important;
+  animation: wantedEffect 1.5s infinite ease-in-out;
+  border: 4px solid #ef4444 !important;
+  box-shadow: 
+    0 0 20px rgba(239, 68, 68, 0.8),
+    0 0 40px rgba(239, 68, 68, 0.6),
+    0 0 60px rgba(239, 68, 68, 0.4) !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%) !important;
+  z-index: 20;
 }
 
-@keyframes wantedPulse {
+.wanted-effect::before {
+  content: "通缉";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(45deg, #ef4444, #dc2626);
+  color: white;
+  font-size: 8px;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 4px;
+  z-index: 30;
+  animation: wantedTextPulse 1s infinite alternate;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.wanted-effect::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  animation: wantedBorderPulse 2s infinite linear;
+  z-index: 15;
+}
+
+@keyframes wantedEffect {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
-    border-color: #fff;
-  }
-  25% {
-    transform: scale(1.02);
-    box-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
-    border-color: #fca5a5;
+    box-shadow: 
+      0 0 20px rgba(239, 68, 68, 0.8),
+      0 0 40px rgba(239, 68, 68, 0.6),
+      0 0 60px rgba(239, 68, 68, 0.4);
   }
   50% {
     transform: scale(1.05);
-    box-shadow: 0 0 40px rgba(239, 68, 68, 1);
-    border-color: #f87171;
-  }
-  75% {
-    transform: scale(1.02);
-    box-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
-    border-color: #fca5a5;
+    box-shadow: 
+      0 0 30px rgba(239, 68, 68, 1),
+      0 0 60px rgba(239, 68, 68, 0.8),
+      0 0 90px rgba(239, 68, 68, 0.6);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
-    border-color: #fff;
+    box-shadow: 
+      0 0 20px rgba(239, 68, 68, 0.8),
+      0 0 40px rgba(239, 68, 68, 0.6),
+      0 0 60px rgba(239, 68, 68, 0.4);
+  }
+}
+
+@keyframes wantedTextPulse {
+  0% {
+    transform: scale(1);
+    background: linear-gradient(45deg, #ef4444, #dc2626);
+  }
+  100% {
+    transform: scale(1.1);
+    background: linear-gradient(45deg, #dc2626, #b91c1c);
+  }
+}
+
+@keyframes wantedBorderPulse {
+  0% {
+    border-color: rgba(255, 255, 255, 0.8);
+    transform: rotate(0deg);
+  }
+  25% {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  50% {
+    border-color: rgba(255, 255, 255, 0.8);
+    transform: rotate(180deg);
+  }
+  75% {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  100% {
+    border-color: rgba(255, 255, 255, 0.8);
+    transform: rotate(360deg);
   }
 }
 </style>
