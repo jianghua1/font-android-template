@@ -118,7 +118,6 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { stockApi } from '../api/stockApi'
 
 const props = defineProps({
   visible: {

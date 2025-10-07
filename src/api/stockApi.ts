@@ -94,6 +94,44 @@ export interface StockRemarksResponse {
   data: StockRemarks
 }
 
+// 今日推荐消息接口响应类型
+export interface Message {
+  id: number
+  stockCode: string
+  stockName: string
+  message: string
+  createTime: string
+  read: boolean
+}
+
+export interface MessageResponse {
+  code: number
+  message: string
+  data: Message[]
+}
+
+// 标记已读响应类型
+export interface MarkAsReadResponse {
+  code: number
+  message: string
+  data: null
+}
+
+// 股价和涨跌幅接口响应类型
+export interface StockPriceData {
+  symbol: string
+  currentPrice: number
+  changePercent: number
+  previousClose: number
+  errorMessage: string | null
+}
+
+export interface StockPriceResponse {
+  code: number
+  message: string
+  data: StockPriceData
+}
+
 // API服务
 export const stockApi = {
   // 获取股票池列表
@@ -245,6 +283,51 @@ export const stockApi = {
       }
     } catch (error) {
       console.error(`获取股票 ${stockCode} 的备注信息失败:`, error)
+      throw error
+    }
+  },
+
+  // 获取今日推荐股票列表
+  async getTodayRecommendations(): Promise<Message[]> {
+    try {
+      const response = await axiosInstance.get<MessageResponse>('/api/stock-strength-changes/today')
+      if (response.data.code === 200) {
+        return response.data.data
+      } else {
+        throw new Error(response.data.message)
+      }
+    } catch (error) {
+      console.error('获取今日推荐股票列表失败:', error)
+      throw error
+    }
+  },
+
+  // 批量标记消息为已读
+  async markMessagesAsRead(ids: number[]): Promise<void> {
+    try {
+      const response = await axiosInstance.post<MarkAsReadResponse>('/api/stock-strength-changes/read', ids)
+      if (response.data.code === 200) {
+        return
+      } else {
+        throw new Error(response.data.message)
+      }
+    } catch (error) {
+      console.error('标记消息为已读失败:', error)
+      throw error
+    }
+  },
+
+  // 获取股价和涨跌幅数据
+  async getStockPrice(stockCode: string): Promise<StockPriceData> {
+    try {
+      const response = await axiosInstance.get<StockPriceResponse>(`/stock-data/price/${stockCode}`)
+      if (response.data.code === 200) {
+        return response.data.data
+      } else {
+        throw new Error(response.data.message)
+      }
+    } catch (error) {
+      console.error(`获取股票 ${stockCode} 的股价数据失败:`, error)
       throw error
     }
   }

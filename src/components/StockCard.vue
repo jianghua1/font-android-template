@@ -7,7 +7,7 @@
       { 'copy-highlight': isCopying },
       { 'wanted-effect': showWantedEffect }
     ]"
-    @click="$emit('show-detail', stock)"
+    @click="handleCardClick"
     @mousedown="startLongPress"
     @mouseup="cancelLongPress"
     @touchstart="startLongPress"
@@ -27,10 +27,10 @@
         {{ getDisplayName(stock.stockName) }}
       </div>
       
-      <!-- 备注标记 -->
+      <!-- 未读消息标记 -->
       <div 
-        v-if="stock.hasRemarks" 
-        class="remarks-indicator absolute top-1 right-1 w-1.5 h-1.5 bg-yellow-400 rounded-sm"
+        v-if="hasUnreadMessage" 
+        class="unread-indicator absolute top-1 right-1 w-1.5 h-1.5 bg-yellow-400 rounded-sm"
       ></div>
 
       <!-- 冻结标记 -->
@@ -57,10 +57,14 @@ const props = defineProps({
   edgeSignal: {
     type: Number,
     default: 0
+  },
+  hasUnreadMessage: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['copy-stock-code', 'show-detail'])
+const emit = defineEmits(['copy-stock-code', 'show-detail', 'show-strength-message'])
 
 const isCopying = ref(false)
 const longPressTimer = ref(null)
@@ -143,6 +147,17 @@ const getDisplayName = (stockName) => {
   
   // 否则显示前两个字
   return stockName.slice(0, 2)
+}
+
+// 处理卡片点击事件
+const handleCardClick = () => {
+  if (props.hasUnreadMessage) {
+    // 有未读消息时，显示股票转强消息并标记为已读
+    emit('show-strength-message', props.stock)
+  } else {
+    // 没有未读消息时，显示正常详情
+    emit('show-detail', props.stock)
+  }
 }
 </script>
 

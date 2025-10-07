@@ -14,8 +14,10 @@
         :stock="stock"
         :signal="stock.stockStrengthSignal"
         :edge-signal="stockSignals[stock.stockCode]"
+        :has-unread-message="hasUnreadMessage(stock.stockCode)"
         @copy-stock-code="$emit('copy-stock-code', stock.stockCode)"
         @show-detail="$emit('show-detail', stock)"
+        @show-strength-message="$emit('show-strength-message', stock)"
       />
       
       <!-- 添加股票按钮 -->
@@ -42,10 +44,14 @@ defineProps({
   stockSignals: {
     type: Object,
     required: true
+  },
+  hasUnreadMessage: {
+    type: Function,
+    required: true
   }
 })
 
-defineEmits(['copy-stock-code', 'show-detail', 'add-stock'])
+defineEmits(['copy-stock-code', 'show-detail', 'add-stock', 'show-strength-message'])
 </script>
 
 <style scoped>
