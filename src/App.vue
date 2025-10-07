@@ -47,6 +47,14 @@
       :remarks="currentRemarks"
       :createTime="currentRemarksCreateTime"
     />
+
+    <!-- 股票转强消息弹窗 -->
+    <StrengthMessageModal
+      v-model:visible="showStrengthMessageModal"
+      :stock="selectedStrengthMessageStock"
+      :message="strengthMessage"
+      :messageTime="strengthMessageTime"
+    />
   </div>
 </template>
 
@@ -56,6 +64,7 @@ import StockPoolSection from './components/StockPoolSection.vue'
 import StockDetailModal from './components/StockDetailModal.vue'
 import AddStockModal from './components/AddStockModal.vue'
 import RemarksModal from './components/RemarksModal.vue'
+import StrengthMessageModal from './components/StrengthMessageModal.vue'
 import { stockApi } from './api/stockApi'
 
 // 股票池数据
@@ -294,6 +303,12 @@ const showRemarksModal = ref(false)
 const currentRemarks = ref('')
 const currentRemarksCreateTime = ref('')
 
+// 股票转强消息弹窗相关状态
+const showStrengthMessageModal = ref(false)
+const selectedStrengthMessageStock = ref(null)
+const strengthMessage = ref('')
+const strengthMessageTime = ref('')
+
 // 获取股票备注信息
 const getStockRemarks = async (stock) => {
   try {
@@ -405,7 +420,12 @@ const showStrengthMessage = (stock) => {
   if (unreadMessages.length > 0) {
     // 显示第一条未读消息
     const message = unreadMessages[0]
-    alert(`股票转强消息：${stock.stockName} (${stock.stockCode})\n\n${message.message}`)
+    
+    // 设置弹窗状态
+    selectedStrengthMessageStock.value = stock
+    strengthMessage.value = message.content
+    strengthMessageTime.value = new Date(message.time).toLocaleString()
+    showStrengthMessageModal.value = true
     
     // 标记该消息为已读
     const messageIds = unreadMessages.map(msg => msg.id)

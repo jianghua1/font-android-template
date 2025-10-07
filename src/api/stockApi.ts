@@ -98,9 +98,8 @@ export interface StockRemarksResponse {
 export interface Message {
   id: number
   stockCode: string
-  stockName: string
-  message: string
-  createTime: string
+  content: string
+  time: number
   read: boolean
 }
 
@@ -290,7 +289,7 @@ export const stockApi = {
   // 获取今日推荐股票列表
   async getTodayRecommendations(): Promise<Message[]> {
     try {
-      const response = await axiosInstance.get<MessageResponse>('/api/stock-strength-changes/today')
+      const response = await axiosInstance.get<MessageResponse>('/stock-strength-changes/today')
       if (response.data.code === 200) {
         return response.data.data
       } else {
@@ -305,7 +304,7 @@ export const stockApi = {
   // 批量标记消息为已读
   async markMessagesAsRead(ids: number[]): Promise<void> {
     try {
-      const response = await axiosInstance.post<MarkAsReadResponse>('/api/stock-strength-changes/read', ids)
+      const response = await axiosInstance.post<MarkAsReadResponse>('/stock-strength-changes/read', ids)
       if (response.data.code === 200) {
         return
       } else {
