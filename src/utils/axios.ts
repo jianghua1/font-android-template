@@ -10,6 +10,21 @@ class AxiosService {
     }
 
     this.instance = axios.create(config)
+
+    // 添加请求拦截器
+    this.instance.interceptors.request.use(
+      (config) => {
+        // 从localStorage获取token
+        const token = localStorage.getItem('jwt_token')
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
+        }
+        return config
+      },
+      (error) => {
+        return Promise.reject(error)
+      }
+    )
   }
 
   public getInstance(): AxiosInstance {

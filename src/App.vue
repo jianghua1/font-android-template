@@ -1,6 +1,75 @@
 <template>
   <div class="min-h-screen bg-neutral-900 text-white p-4">
 
+    <!-- Token设置按钮 -->
+    <div class="mb-6">
+      <button
+        @click="showTokenSettings = true"
+        class="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-md transition-colors flex items-center gap-2"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+        </svg>
+        设置Token
+      </button>
+    </div>
+
+    <!-- Token设置弹窗 -->
+    <div v-if="showTokenSettings" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-neutral-800 rounded-lg p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium text-white">设置JWT Token</h3>
+          <button
+            @click="closeTokenSettings"
+            class="text-neutral-400 hover:text-white transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-neutral-300 mb-2">JWT Token</label>
+            <input
+              v-model="jwtToken"
+              type="text"
+              placeholder="请输入JWT Token"
+              class="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-md text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          
+          <div class="text-xs text-neutral-400">
+            <div v-if="tokenSaved" class="text-green-400">
+              ✓ Token已保存到本地存储
+            </div>
+            <div v-else-if="jwtToken" class="text-yellow-400">
+              ⚠ Token未保存，请点击"保存"按钮
+            </div>
+            <div v-else>
+              请输入JWT Token并点击"保存"按钮
+            </div>
+          </div>
+          
+          <div class="flex gap-2 pt-2">
+            <button
+              @click="saveToken"
+              :disabled="!jwtToken"
+              class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-600 disabled:cursor-not-allowed text-white rounded-md transition-colors"
+            >
+              保存
+            </button>
+            <button
+              @click="clearToken"
+              class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+            >
+              清除
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 股票池分组展示 -->
     <div v-for="pool in stockPools" :key="pool.id">
@@ -48,9 +117,9 @@
       :createTime="currentRemarksCreateTime"
     />
 
-    <!-- 股票转强消息弹窗 -->
-    <StrengthMessageModal
-      v-model:visible="showStrengthMessageModal"
+    <!-- 消息泡泡 -->
+    <MessageBubble
+      v-model:visible="showMessageBubble"
       :stock="selectedStrengthMessageStock"
       :message="strengthMessage"
       :messageTime="strengthMessageTime"
@@ -64,8 +133,55 @@ import StockPoolSection from './components/StockPoolSection.vue'
 import StockDetailModal from './components/StockDetailModal.vue'
 import AddStockModal from './components/AddStockModal.vue'
 import RemarksModal from './components/RemarksModal.vue'
-import StrengthMessageModal from './components/StrengthMessageModal.vue'
+import MessageBubble from './components/MessageBubble.vue'
 import { stockApi } from './api/stockApi'
+
+// JWT Token相关状态
+const jwtToken = ref('')
+const tokenSaved = ref(false)
+const showTokenSettings = ref(false)
+
+// 关闭token设置弹窗
+const closeTokenSettings = () => {
+  showTokenSettings.value = false
+}
+
+// 保存token到localStorage
+const saveToken = () => {
+  if (jwtToken.value) {
+    localStorage.setItem('jwt_token', jwtToken.value)
+    tokenSaved.value = true
+    console.log('JWT Token已保存')
+    // 保存后自动关闭弹窗
+    closeTokenSettings()
+  } else {
+    localStorage.removeItem('jwt_token')
+    tokenSaved.value = false
+    console.log('JWT Token已清除')
+  }
+}
+
+// 清除token
+const clearToken = () => {
+  jwtToken.value = ''
+  localStorage.removeItem('jwt_token')
+  tokenSaved.value = false
+  console.log('JWT Token已清除')
+  // 清除后自动关闭弹窗
+  closeTokenSettings()
+}
+
+// 从localStorage加载token
+const loadToken = () => {
+  const savedToken = localStorage.getItem('jwt_token')
+  if (savedToken) {
+    jwtToken.value = savedToken
+    tokenSaved.value = true
+    console.log('已从localStorage加载JWT Token')
+  } else {
+    tokenSaved.value = false
+  }
+}
 
 // 股票池数据
 const stockPools = ref([])
@@ -303,8 +419,8 @@ const showRemarksModal = ref(false)
 const currentRemarks = ref('')
 const currentRemarksCreateTime = ref('')
 
-// 股票转强消息弹窗相关状态
-const showStrengthMessageModal = ref(false)
+// 消息泡泡相关状态
+const showMessageBubble = ref(false)
 const selectedStrengthMessageStock = ref(null)
 const strengthMessage = ref('')
 const strengthMessageTime = ref('')
@@ -421,11 +537,11 @@ const showStrengthMessage = (stock) => {
     // 显示第一条未读消息
     const message = unreadMessages[0]
     
-    // 设置弹窗状态
+    // 设置消息泡泡状态
     selectedStrengthMessageStock.value = stock
     strengthMessage.value = message.content
     strengthMessageTime.value = new Date(message.time).toLocaleString()
-    showStrengthMessageModal.value = true
+    showMessageBubble.value = true
     
     // 标记该消息为已读
     const messageIds = unreadMessages.map(msg => msg.id)
@@ -578,6 +694,8 @@ const start120MinUpdateTimer = () => {
 
 onMounted(() => {
   console.log('股票卡片页面已加载')
+  // 加载已保存的JWT Token
+  loadToken()
   loadStockPools()
   start120MinUpdateTimer()
   // 启动今日消息提示定时器
