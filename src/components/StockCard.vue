@@ -28,8 +28,8 @@
         class="two-column-text text-xs text-white/90 leading-none mt-1"
       >
         <div class="char-1">{{ getDisplayName(stock.stockName)[0] }}</div>
-        <div class="char-2">{{ getDisplayName(stock.stockName)[1] }}</div>
         <div class="char-3">{{ getDisplayName(stock.stockName)[2] }}</div>
+        <div class="char-2">{{ getDisplayName(stock.stockName)[1] }}</div>
         <div class="char-4">{{ getDisplayName(stock.stockName)[3] }}</div>
       </div>
       <div 
