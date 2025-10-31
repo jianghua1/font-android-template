@@ -1,15 +1,10 @@
 <template>
   <div class="stock-pool-section">
-    <!-- 股票池标题（仅在小屏幕显示） -->
-    <div class="mb-4 text-center md:hidden lg:hidden">
-      <h2 class="text-xl font-semibold text-white">{{ pool.poolName }}</h2>
-    </div>
-
     <!-- 股票卡片网格 -->
     <div class="grid grid-cols-6 md:grid-cols-15 lg:grid-cols-15 gap-1">
-      <!-- 股票池名称方块（仅在中屏和大屏显示） -->
+      <!-- 股票池名称方块（在所有屏幕显示） -->
       <div 
-        class="pool-name-card hidden md:block lg:block"
+        class="pool-name-card"
         :title="pool.poolName"
       >
         <div class="pool-name-content">
