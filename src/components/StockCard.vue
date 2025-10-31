@@ -22,8 +22,20 @@
 
     <!-- 股票信息内容 -->
     <div class="stock-content flex flex-col items-center justify-center z-10 relative">
-      <!-- 股票名称 - 竖排文字 -->
-      <div class="vertical-text text-xs text-white/90 leading-none mt-1">
+      <!-- 股票名称 - 根据字数决定展示方式 -->
+      <div 
+        v-if="getDisplayName(stock.stockName).length === 4"
+        class="two-column-text text-xs text-white/90 leading-none mt-1"
+      >
+        <div class="char-1">{{ getDisplayName(stock.stockName)[0] }}</div>
+        <div class="char-2">{{ getDisplayName(stock.stockName)[1] }}</div>
+        <div class="char-3">{{ getDisplayName(stock.stockName)[2] }}</div>
+        <div class="char-4">{{ getDisplayName(stock.stockName)[3] }}</div>
+      </div>
+      <div 
+        v-else
+        class="vertical-text text-xs text-white/90 leading-none mt-1"
+      >
         {{ getDisplayName(stock.stockName) }}
       </div>
       
@@ -140,12 +152,12 @@ const formatChange = (change) => {
 const getDisplayName = (stockName) => {
   if (!stockName) return ''
   
-  // 如果前两个字是"中国"，则显示接下来的两个字
-  if (stockName.startsWith('中国')) {
-    return stockName.slice(2, 4) || stockName.slice(0, 2)
+  // 如果以"中国"或"航天"开头，显示四个字
+  if (stockName.startsWith('中国') || stockName.startsWith('航天')) {
+    return stockName.slice(0, 4)
   }
   
-  // 否则显示前两个字
+  // 否则显示开头的两个字
   return stockName.slice(0, 2)
 }
 
@@ -362,6 +374,19 @@ const handleCardClick = () => {
   line-height: 1.2;
   letter-spacing: 0.05em;
   text-align: center;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 两列展示样式 - 用于四个字的股票名称 */
+.two-column-text {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.1rem;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-items: center;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 

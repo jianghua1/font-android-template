@@ -1,13 +1,22 @@
 <template>
   <div class="stock-pool-section">
-    <!-- 股票池标题 -->
-    <div class="mb-4 text-center">
+    <!-- 股票池标题（仅在小屏幕显示） -->
+    <div class="mb-4 text-center md:hidden lg:hidden">
       <h2 class="text-xl font-semibold text-white">{{ pool.poolName }}</h2>
-   
     </div>
 
     <!-- 股票卡片网格 -->
-    <div class="grid grid-cols-6 gap-1">
+    <div class="grid grid-cols-6 md:grid-cols-15 lg:grid-cols-15 gap-1">
+      <!-- 股票池名称方块（仅在中屏和大屏显示） -->
+      <div 
+        class="pool-name-card hidden md:block lg:block"
+        :title="pool.poolName"
+      >
+        <div class="pool-name-content">
+          <div class="pool-name-text">{{ pool.poolName }}</div>
+        </div>
+      </div>
+
       <StockCard
         v-for="stock in pool.stocks"
         :key="stock.stockCode"
@@ -63,6 +72,53 @@ defineEmits(['copy-stock-code', 'show-detail', 'add-stock', 'show-strength-messa
   border-bottom: none;
 }
 
+/* 股票池名称方块样式 */
+.pool-name-card {
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(38, 38, 38, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  cursor: default;
+  height: auto;
+  min-height: 40px;
+  min-width: 40px;
+}
+
+.pool-name-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.pool-name-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+}
+
+.pool-name-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-all;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 /* 添加股票按钮样式 */
 .add-stock-card {
   aspect-ratio: 1/1;
@@ -76,7 +132,6 @@ defineEmits(['copy-stock-code', 'show-detail', 'add-stock', 'show-strength-messa
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   cursor: pointer;
-  width: 16.666%;
   height: auto;
   min-height: 40px;
   min-width: 40px;
